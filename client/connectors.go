@@ -22,7 +22,7 @@ func NewConnectors(connectServer string, logger log.Logger) (*Connectors, error)
 	return &Connectors{
 		RESTClient: RESTClient{
 			url:        u,
-			HTTPClient: retryClient(logger),
+			HTTPClient: retryClient(&DefaultClient{Logger: logger}),
 		},
 	}, nil
 }

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
+	"time"
 )
 
 const (
@@ -47,11 +48,34 @@ type (
 var ua = fmt.Sprintf("kcr/%.1f (%s)", version, runtime.Version())
 
 // retryClient internal
-func retryClient(logger log.Logger) *http.Client {
+func retryClient(op RetryOptionParameter) *http.Client {
 	retryClient := retryablehttp.NewClient()
-	retryClient.RetryMax = 5
-	retryClient.Logger = logger
+	retryClient.RetryMax = op.RetryMax()
+	retryClient.Logger = op.ClientLogger()
+	retryClient.RetryWaitMin = op.RetryWait()
 	return retryClient.StandardClient()
+}
+
+type RetryOptionParameter interface {
+	RetryMax() int
+	RetryWait() time.Duration
+	ClientLogger() log.Logger
+}
+
+type DefaultClient struct {
+	Logger log.Logger
+}
+
+func (d *DefaultClient) RetryMax() int {
+	return 5
+}
+
+func (d *DefaultClient) RetryWait() time.Duration {
+	return 2 * time.Second
+}
+
+func (d *DefaultClient) ClientLogger() log.Logger {
+	return d.Logger
 }
 
 // decodeBody internal
